@@ -6,6 +6,7 @@ equip_packages:
   - docker
   - colima
   - docker-compose
+  - openvpn
 
 # Homebrew uses /opt/homebrew on Apple Silicon and /usr/local on Intel Macs.
 equip_homebrew_prefix: >-
