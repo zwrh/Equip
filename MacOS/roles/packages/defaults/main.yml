@@ -1,0 +1,10 @@
+---
+# Command-line tools, runtimes, and libraries.
+equip_packages:
+  - tmux
+  - vim
+
+# Homebrew uses /opt/homebrew on Apple Silicon and /usr/local on Intel Macs.
+equip_homebrew_prefix: >-
+  {{ '/opt/homebrew' if ansible_architecture == 'arm64' else '/usr/local' }}
+equip_homebrew_executable: "{{ equip_homebrew_prefix }}/bin/brew"

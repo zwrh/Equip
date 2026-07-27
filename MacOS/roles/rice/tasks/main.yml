@@ -1,0 +1,5 @@
+---
+- name: Configure the Dock
+  ansible.builtin.import_tasks: dock.yml
+  tags:
+    - dock

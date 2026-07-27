@@ -1,0 +1,6 @@
+---
+- name: Populate the tmux configuration
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../static-files/tmux.conf"
+    dest: "{{ ansible_user_dir }}/.tmux.conf"
+    mode: "0644"

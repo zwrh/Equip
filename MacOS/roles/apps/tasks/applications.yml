@@ -1,0 +1,54 @@
+---
+- name: Check whether Homebrew is available for applications
+  ansible.builtin.stat:
+    path: "{{ equip_homebrew_executable }}"
+  register: equip_apps_homebrew
+
+- name: Require Homebrew before installing applications
+  ansible.builtin.assert:
+    that:
+      - equip_apps_homebrew.stat.exists
+    fail_msg: >-
+      Homebrew is required to install applications. Run
+      ansible-playbook site.yml --tags homebrew first.
+
+- name: Check which applications are installed
+  ansible.builtin.stat:
+    path: "{{ item.app_path }}"
+  loop: "{{ equip_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: equip_apps_status
+
+- name: Install missing applications
+  ansible.builtin.command:
+    argv:
+      - "{{ equip_homebrew_executable }}"
+      - install
+      - --cask
+      - "{{ item.item.cask }}"
+  environment:
+    HOMEBREW_NO_ANALYTICS: "1"
+  loop: "{{ equip_apps_status.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: not item.stat.exists
+  changed_when: true
+
+- name: Verify selected applications
+  ansible.builtin.stat:
+    path: "{{ item.app_path }}"
+  loop: "{{ equip_apps }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: equip_apps_after_install
+
+- name: Confirm selected applications are installed
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: >-
+      {{ item.item.name }} was not found at {{ item.item.app_path }} after installation.
+  loop: "{{ equip_apps_after_install.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"

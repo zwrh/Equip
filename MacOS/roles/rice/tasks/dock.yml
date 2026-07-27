@@ -1,0 +1,110 @@
+---
+- name: Check whether Homebrew is available for Dock configuration
+  ansible.builtin.stat:
+    path: "{{ equip_homebrew_executable }}"
+  register: equip_dock_homebrew
+
+- name: Require Homebrew before configuring the Dock
+  ansible.builtin.assert:
+    that:
+      - equip_dock_homebrew.stat.exists
+    fail_msg: >-
+      Homebrew is required to configure the Dock. Run
+      ansible-playbook site.yml --tags homebrew first.
+
+- name: Check whether dockutil is installed
+  ansible.builtin.stat:
+    path: "{{ equip_dockutil_executable }}"
+  register: equip_dockutil
+
+- name: Install dockutil when missing
+  ansible.builtin.command:
+    argv:
+      - "{{ equip_homebrew_executable }}"
+      - install
+      - dockutil
+  environment:
+    HOMEBREW_NO_ANALYTICS: "1"
+  when: not equip_dockutil.stat.exists
+  changed_when: true
+
+- name: Check applications selected for the Dock
+  ansible.builtin.stat:
+    path: "{{ item.app_path }}"
+  loop: "{{ equip_dock_pinned_applications }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: equip_dock_apps
+
+- name: Require selected Dock applications to be installed
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: >-
+      {{ item.item.name }} must be installed before it can be added to the Dock.
+      Run ansible-playbook site.yml --tags apps first.
+  loop: "{{ equip_dock_apps.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Read pinned applications from the Dock
+  ansible.builtin.shell: |
+    set -o pipefail
+    "{{ equip_dockutil_executable }}" --list |
+      /usr/bin/awk -F '\t' '$3 == "persistentApps" { print $1 }'
+  args:
+    executable: /bin/bash
+  register: equip_dock_current_applications
+  changed_when: false
+
+- name: Remove existing pinned applications when the Dock differs
+  ansible.builtin.command:
+    argv:
+      - "{{ equip_dockutil_executable }}"
+      - --remove
+      - "{{ item }}"
+      - --no-restart
+  loop: "{{ equip_dock_current_applications.stdout_lines }}"
+  when:
+    - equip_dock_current_applications.stdout_lines !=
+      (equip_dock_pinned_applications | map(attribute='name') | list)
+  changed_when: true
+  notify: Restart Dock
+
+- name: Add selected pinned applications when the Dock differs
+  ansible.builtin.command:
+    argv:
+      - "{{ equip_dockutil_executable }}"
+      - --add
+      - "{{ item.app_path }}"
+      - --position
+      - end
+      - --section
+      - apps
+      - --no-restart
+  loop: "{{ equip_dock_pinned_applications }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - equip_dock_current_applications.stdout_lines !=
+      (equip_dock_pinned_applications | map(attribute='name') | list)
+  changed_when: true
+  notify: Restart Dock
+
+- name: Disable suggested and recent applications in the Dock
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: show-recents
+    type: bool
+    value: false
+    state: present
+  notify: Restart Dock
+
+- name: Minimize windows into their application icon
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: minimize-to-application
+    type: bool
+    value: true
+    state: present
+  notify: Restart Dock

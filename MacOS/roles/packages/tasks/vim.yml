@@ -1,0 +1,6 @@
+---
+- name: Populate the Vim configuration
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../static-files/vimrc"
+    dest: "{{ ansible_user_dir }}/.vimrc"
+    mode: "0644"

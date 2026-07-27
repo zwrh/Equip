@@ -1,0 +1,20 @@
+---
+# Appearance, Dock, system preferences, and dotfiles.
+equip_homebrew_prefix: >-
+  {{ '/opt/homebrew' if ansible_architecture == 'arm64' else '/usr/local' }}
+equip_homebrew_executable: "{{ equip_homebrew_prefix }}/bin/brew"
+equip_dockutil_executable: "{{ equip_homebrew_prefix }}/bin/dockutil"
+
+equip_dock_pinned_applications:
+  - name: Discord
+    app_path: /Applications/Discord.app
+  - name: Spotify
+    app_path: /Applications/Spotify.app
+  - name: Brave Browser
+    app_path: /Applications/Brave Browser.app
+  - name: Ghostty
+    app_path: /Applications/Ghostty.app
+  - name: Visual Studio Code
+    app_path: /Applications/Visual Studio Code.app
+  - name: Microsoft Outlook
+    app_path: /Applications/Microsoft Outlook.app

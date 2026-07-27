@@ -1,0 +1,5 @@
+---
+- name: Install selected applications
+  ansible.builtin.import_tasks: applications.yml
+  tags:
+    - applications

@@ -1,0 +1,20 @@
+---
+- name: Install and update Homebrew
+  ansible.builtin.import_tasks: homebrew.yml
+  tags:
+    - homebrew
+
+- name: Install selected command-line packages
+  ansible.builtin.import_tasks: packages.yml
+  tags:
+    - cli-packages
+
+- name: Configure tmux
+  ansible.builtin.import_tasks: tmux.yml
+  tags:
+    - tmux-config
+
+- name: Configure Vim
+  ansible.builtin.import_tasks: vim.yml
+  tags:
+    - vim-config

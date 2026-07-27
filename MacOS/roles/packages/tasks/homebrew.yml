@@ -1,0 +1,89 @@
+---
+- name: Check whether Homebrew is installed
+  ansible.builtin.stat:
+    path: "{{ equip_homebrew_executable }}"
+  register: equip_homebrew
+
+- name: Install Homebrew when missing
+  when: not equip_homebrew.stat.exists
+  block:
+    - name: Download the official Homebrew installer
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+        dest: /tmp/equip-install-homebrew.sh
+        mode: "0755"
+
+    - name: Authorize sudo for the Homebrew installer
+      ansible.builtin.command: /usr/bin/true
+      become: true
+      changed_when: false
+
+    - name: Run the official Homebrew installer
+      ansible.builtin.command:
+        argv:
+          - /bin/bash
+          - /tmp/equip-install-homebrew.sh
+      environment:
+        NONINTERACTIVE: "1"
+      changed_when: true
+
+  always:
+    - name: Remove the downloaded Homebrew installer
+      ansible.builtin.file:
+        path: /tmp/equip-install-homebrew.sh
+        state: absent
+
+- name: Verify that Homebrew is installed
+  ansible.builtin.stat:
+    path: "{{ equip_homebrew_executable }}"
+  register: equip_homebrew_after_install
+
+- name: Stop when Homebrew could not be installed
+  ansible.builtin.assert:
+    that:
+      - equip_homebrew_after_install.stat.exists
+    fail_msg: >-
+      Homebrew was not found at {{ equip_homebrew_executable }} after installation.
+      Confirm the Mac architecture and review the installer output.
+
+- name: Add Homebrew to the zsh environment
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_user_dir }}/.zprofile"
+    create: true
+    mode: "0644"
+    marker: "# {mark} EQUIP HOMEBREW"
+    block: |
+      eval "$({{ equip_homebrew_executable }} shellenv)"
+
+- name: Update Homebrew
+  ansible.builtin.command:
+    argv:
+      - "{{ equip_homebrew_executable }}"
+      - update
+  environment:
+    HOMEBREW_NO_ANALYTICS: "1"
+  register: equip_homebrew_update_result
+  changed_when: >-
+    'Already up-to-date.' not in
+    (equip_homebrew_update_result.stdout + equip_homebrew_update_result.stderr)
+
+- name: Find outdated Homebrew packages
+  ansible.builtin.command:
+    argv:
+      - "{{ equip_homebrew_executable }}"
+      - outdated
+      - --quiet
+  environment:
+    HOMEBREW_NO_ANALYTICS: "1"
+  register: equip_homebrew_outdated
+  changed_when: false
+
+- name: Upgrade outdated Homebrew packages
+  ansible.builtin.command:
+    argv:
+      - "{{ equip_homebrew_executable }}"
+      - upgrade
+  environment:
+    HOMEBREW_NO_ANALYTICS: "1"
+  when: equip_homebrew_outdated.stdout_lines | length > 0
+  changed_when: true

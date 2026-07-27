@@ -1,0 +1,25 @@
+---
+# Graphical macOS applications.
+equip_apps:
+  - name: Brave
+    cask: brave-browser
+    app_path: /Applications/Brave Browser.app
+  - name: Spotify
+    cask: spotify
+    app_path: /Applications/Spotify.app
+  - name: Ghostty
+    cask: ghostty
+    app_path: /Applications/Ghostty.app
+  - name: Discord
+    cask: discord
+    app_path: /Applications/Discord.app
+  - name: Visual Studio Code
+    cask: visual-studio-code
+    app_path: /Applications/Visual Studio Code.app
+  - name: Microsoft Outlook
+    cask: microsoft-outlook
+    app_path: /Applications/Microsoft Outlook.app
+
+equip_homebrew_prefix: >-
+  {{ '/opt/homebrew' if ansible_architecture == 'arm64' else '/usr/local' }}
+equip_homebrew_executable: "{{ equip_homebrew_prefix }}/bin/brew"
