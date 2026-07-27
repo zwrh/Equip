@@ -15,3 +15,7 @@
     - role: rice
       tags:
         - rice
+
+    - role: windows-pentest
+      tags:
+        - windows-pentest
