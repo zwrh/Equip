@@ -8,6 +8,7 @@ Ansible automation for equipping a fresh macOS installation.
 - `apps`: graphical macOS applications
 - `rice`: appearance, Dock, preferences, and dotfiles
 - `windows-pentest`: Windows AD/network penetration testing toolkit
+- `pentesting`: General-purpose penetration testing tools
 
 The `packages` segment installs Homebrew when it is missing, updates Homebrew,
 upgrades installed formulae and casks only when outdated items are found, and

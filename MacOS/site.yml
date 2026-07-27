@@ -19,3 +19,7 @@
     - role: windows-pentest
       tags:
         - windows-pentest
+
+    - role: pentesting
+      tags:
+        - pentesting
